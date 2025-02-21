@@ -4,38 +4,51 @@ from ranker import compute_similarity_sbert
 from resume_parser import extract_text 
 
 def rank_resumes(job_description, resume_files):
-    scores = []
+    """Processes and ranks resumes based on job description similarity."""
+    extracted_texts = []
+    file_names = []
+
     for file in resume_files:
         file_name = os.path.basename(file.name)
-        
-        text = str(extract_text(file)).strip()  # Ensure text is a string
-        if not text or text.lower() == "no text extracted":
+        text = extract_text(file)
+        if not text or text == "No text extracted":
             st.error(f"⚠️ Could not extract text from: {file_name}")
             continue
-        
-        score = compute_similarity_sbert(job_description, [text])  # Ensure [text] is a valid list
-        scores.append((file_name, score, file))  
-    
-    scores.sort(key=lambda x: x[1], reverse=True)
-    return scores
+        extracted_texts.append(text)
+        file_names.append((file_name, file))  # Store file info for later use
 
-st.title("AI-Powered Resume Screening & Ranking")
+    # Compute similarity only if we have valid resumes
+    if extracted_texts:
+        scores = compute_similarity_sbert(job_description, extracted_texts)
+        ranked_resumes = [(file_names[idx][0], score, file_names[idx][1]) for idx, (text, score) in enumerate(scores)]
+        return ranked_resumes
+    else:
+        return []
 
-uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)
+# Streamlit UI
+st.title("📄 AI-Powered Resume Screening & Ranking")
+
+uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", type=["pdf", "docx"], accept_multiple_files=True)
 job_desc = st.text_area("Enter Job Description:")
 
 if st.button("Process"):
-    if job_desc and uploaded_files:
+    if job_desc.strip() and uploaded_files:
         ranked_resumes = rank_resumes(job_desc, uploaded_files)
-        st.subheader("📜 Ranked Resumes")
-        for rank, (file_name, score, file) in enumerate(ranked_resumes, start=1):
-            file_data = file.read()
-            with st.expander(f"#{rank}: {file_name} (Score: {score:.2f})"):
-                st.download_button(
-                    label="📥 Download Resume",
-                    data=file_data,
-                    file_name=file_name,
-                    mime="application/octet-stream"
-                )
+
+        if ranked_resumes:
+            st.subheader("📜 Ranked Resumes")
+            for rank, (file_name, score, file) in enumerate(ranked_resumes, start=1):
+                file.seek(0)  # Reset file pointer before reading
+                file_data = file.read()
+
+                with st.expander(f"#{rank}: {file_name} (Score: {score}%)"):
+                    st.download_button(
+                        label="📥 Download Resume",
+                        data=file_data,
+                        file_name=file_name,
+                        mime="application/octet-stream"
+                    )
+        else:
+            st.warning("No valid resumes to rank. Please check the uploaded files.")
     else:
         st.warning("Please upload resumes and enter a job description.")
