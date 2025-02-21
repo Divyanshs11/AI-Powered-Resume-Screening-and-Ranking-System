@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 from ranker import compute_similarity_sbert
+from resume_parser import extract_text 
+
 def rank_resumes(job_description, resume_files):
     scores = []
     for file in resume_files:
@@ -10,10 +12,13 @@ def rank_resumes(job_description, resume_files):
         scores.append((file_name, score, file)) 
     scores.sort(key=lambda x: x[1], reverse=True)
     return scores
+
 st.title("AI-Powered Resume Screening & Ranking")
+
+uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)\
 job_desc = st.text_area("Enter Job Description:")
-uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)
-if st.button("Rank Resumes"):
+
+if st.button("Process"):
     if job_desc and uploaded_files:
         ranked_resumes = rank_resumes(job_desc, uploaded_files)
         st.subheader("📜 Ranked Resumes")
