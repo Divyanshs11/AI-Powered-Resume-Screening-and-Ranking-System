@@ -8,8 +8,11 @@ def rank_resumes(job_description, resume_files):
     for file in resume_files:
         file_name = os.path.basename(file.name)
         text = extract_text(file)
-        score = compute_similarity_sbert(job_description, text)
-        scores.append((file_name, score, file)) 
+        if not text or text == "No text extracted":
+            st.error(f"⚠️ Could not extract text from: {file_name}")
+            continue
+        score = compute_similarity_sbert(job_description, [text])
+        scores.append((file_name, score, file))  
     scores.sort(key=lambda x: x[1], reverse=True)
     return scores
 
@@ -23,10 +26,11 @@ if st.button("Process"):
         ranked_resumes = rank_resumes(job_desc, uploaded_files)
         st.subheader("📜 Ranked Resumes")
         for rank, (file_name, score, file) in enumerate(ranked_resumes, start=1):
+            file_data = file.read()
             with st.expander(f"#{rank}: {file_name} (Score: {score:.2f})"):
                 st.download_button(
                     label="📥 Download Resume",
-                    data=file.getvalue(),
+                    data=file_data,
                     file_name=file_name,
                     mime="application/octet-stream"
                 )
