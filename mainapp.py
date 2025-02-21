@@ -1,24 +1,29 @@
 import streamlit as st
 import os
-from resume_parser import extract_text
-from DataPre import clean_text
-from ranker import compute_similarity_sbert  # ✅ Updated function name
-
-st.set_page_config(page_title="AI Resume Screening", page_icon="📄")
-
-st.title("🔍 AI Resume Screening & Ranking System")
-st.write("Upload resumes and a job description to rank the best matches.")
-
-uploaded_resumes = st.file_uploader("Upload Resume(s)", type=["pdf", "docx"], accept_multiple_files=True)
-job_description = st.text_area("Enter Job Description")
-
-if st.button("Process"):
-    if uploaded_resumes and job_description:
-        resume_texts = [clean_text(extract_text(resume)) for resume in uploaded_resumes]
-        ranked_resumes = compute_similarity_sbert(resume_texts, clean_text(job_description))
-
-        st.subheader("🏆 Top Matching Resumes")
-        for i, (resume_text, score) in enumerate(ranked_resumes, 1):
-            st.write(f"**Rank {i}:** Resume Score: {round(score * 100, 2)}%")  # Higher score = Better match
+from ranker import compute_similarity_sbert
+def rank_resumes(job_description, resume_files):
+    scores = []
+    for file in resume_files:
+        file_name = os.path.basename(file.name)
+        text = extract_text(file)
+        score = compute_similarity_sbert(job_description, text)
+        scores.append((file_name, score, file)) 
+    scores.sort(key=lambda x: x[1], reverse=True)
+    return scores
+st.title("AI-Powered Resume Screening & Ranking")
+job_desc = st.text_area("Enter Job Description:")
+uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)
+if st.button("Rank Resumes"):
+    if job_desc and uploaded_files:
+        ranked_resumes = rank_resumes(job_desc, uploaded_files)
+        st.subheader("📜 Ranked Resumes")
+        for rank, (file_name, score, file) in enumerate(ranked_resumes, start=1):
+            with st.expander(f"#{rank}: {file_name} (Score: {score:.2f})"):
+                st.download_button(
+                    label="📥 Download Resume",
+                    data=file.getvalue(),
+                    file_name=file_name,
+                    mime="application/octet-stream"
+                )
     else:
-        st.warning("Please upload resumes and provide a job description.")
+        st.warning("Please upload resumes and enter a job description.")
