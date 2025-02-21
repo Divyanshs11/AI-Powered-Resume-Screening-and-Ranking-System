@@ -23,7 +23,7 @@ def rank_resumes(job_description, resume_files):
         ranked_resumes = [(file_names[idx][0], score, file_names[idx][1]) for idx, (text, score) in enumerate(scores)]
         return ranked_resumes
     else:
-        return []
+        return []  # Ensure empty return if no valid resumes
 
 # Streamlit UI
 st.title("📄 AI-Powered Resume Screening & Ranking")
