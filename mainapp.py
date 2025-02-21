@@ -15,7 +15,7 @@ def rank_resumes(job_description, resume_files):
 
 st.title("AI-Powered Resume Screening & Ranking")
 
-uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)\
+uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", accept_multiple_files=True)
 job_desc = st.text_area("Enter Job Description:")
 
 if st.button("Process"):
