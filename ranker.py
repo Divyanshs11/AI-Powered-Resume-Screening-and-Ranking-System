@@ -7,11 +7,16 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def compute_similarity_sbert(job_description, resume_texts):
     """Computes similarity scores using SBERT + Cosine Similarity and returns full decimal percentages."""
-    if not resume_texts or not all(isinstance(text, str) for text in resume_texts):
-        raise ValueError("resume_texts must be a list of non-empty strings.")
+    
+    # Validate inputs
+    if not resume_texts:
+        return []  # No resumes to compare
 
     if not isinstance(job_description, str) or job_description.strip() == "":
-        raise ValueError("job_description must be a non-empty string.")
+        raise ValueError("Job description must be a non-empty string.")
+
+    if not all(isinstance(text, str) and text.strip() for text in resume_texts):
+        raise ValueError("All resumes must be non-empty text strings.")
 
     # Encode job description and resumes
     all_texts = [job_description] + resume_texts
@@ -23,7 +28,7 @@ def compute_similarity_sbert(job_description, resume_texts):
     # Compute cosine similarity (values between 0 and 1)
     scores = cosine_similarity(job_embedding, resume_embeddings)[0]
 
-    # Convert scores to percentages with full decimal precision
+    # Convert scores to percentages (full precision)
     scores_percentage = [score * 100 for score in scores]  # No rounding applied
 
     # Pair resumes with scores and sort them
