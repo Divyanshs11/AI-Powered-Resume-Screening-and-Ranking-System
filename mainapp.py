@@ -7,12 +7,15 @@ def rank_resumes(job_description, resume_files):
     scores = []
     for file in resume_files:
         file_name = os.path.basename(file.name)
-        text = extract_text(file)
-        if not text or text == "No text extracted":
+        
+        text = str(extract_text(file)).strip()  # Ensure text is a string
+        if not text or text.lower() == "no text extracted":
             st.error(f"⚠️ Could not extract text from: {file_name}")
             continue
-        score = compute_similarity_sbert(job_description, [text])
+        
+        score = compute_similarity_sbert(job_description, [text])  # Ensure [text] is a valid list
         scores.append((file_name, score, file))  
+    
     scores.sort(key=lambda x: x[1], reverse=True)
     return scores
 
